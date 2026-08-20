@@ -49,6 +49,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - api_venv:/app/.venv
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -87,3 +90,4 @@ services:
 volumes:
   pgdata:
   qdrantdata:
+  api_venv:

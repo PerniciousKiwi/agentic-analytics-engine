@@ -33,6 +33,7 @@ dependencies = [
     "typer>=0.13,<1",
     "rich>=13.9,<14",
     "mcp>=1.1,<2",
+    "kaggle>=2.2.4",
 ]
 
 [project.optional-dependencies]
@@ -124,4 +125,9 @@ markers = [
     "integration: tests that require Docker services",
     "slow: tests that take more than 30 seconds",
     "llm: tests that require Ollama",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
 ]

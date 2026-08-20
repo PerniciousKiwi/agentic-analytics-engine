@@ -1,0 +1,142 @@
+version: 2
+
+models:
+
+  - name: fct_orders
+    description: "Order-level fact table."
+
+    columns:
+      - name: order_id
+        description: "Unique identifier for an order."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Source customer record identifier associated with the order."
+        tests:
+          - not_null
+
+      - name: customer_unique_id
+        description: "Business customer identifier associated with the order."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_unique_id
+
+      - name: order_status
+        description: "Current status of the order."
+
+      - name: payment_reconciliation_status
+        description: "Classification of the relationship between calculated order value and recorded payment value."
+
+
+  - name: fct_order_items
+    description: "Order-item level fact table."
+
+    columns:
+
+      - name: order_id
+        description: "Order containing the item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+
+      - name: order_item_id
+        description: "Item sequence number within an order."
+        tests:
+          - not_null
+
+      - name: product_id
+        description: "Product associated with the order item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+               to: ref('dim_products')
+               field: product_id
+
+      - name: seller_id
+        description: "Seller associated with the order item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+               to: ref('dim_sellers')
+               field: seller_id
+
+  - name: dim_customer
+    description: "Customer dimension with historical address versions."
+
+    columns:
+      - name: customer_unique_id
+        description: "Identifier representing the underlying customer."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Customer record associated with this historical version."
+        tests:
+          - not_null
+
+      - name: valid_from
+        description: "Timestamp when this customer history version became effective."
+        tests:
+          - not_null
+
+      - name: is_current
+        description: "Whether this is the current customer history version."
+        tests:
+          - not_null
+
+
+  - name: dim_products
+    description: "Product dimension."
+
+    columns:
+      - name: product_id
+        description: "Unique identifier for a product."
+        tests:
+          - not_null
+          - unique
+
+
+  - name: dim_sellers
+    description: "Seller dimension."
+
+    columns:
+      - name: seller_id
+        description: "Unique identifier for a seller."
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_reviews
+    description: >
+      One row per (order_id, review_id). The grain represents a review
+      associated with an order. review_id alone is not unique in the
+      source data because some review_ids are associated with multiple
+      orders.
+
+    columns:
+      - name: order_id
+        description: "Order associated with the review."
+        tests:
+          - not_null
+
+      - name: review_id
+        description: "Review identifier from the source."
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns:
+            - order_id
+            - review_id

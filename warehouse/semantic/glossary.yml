@@ -1,0 +1,79 @@
+version: 1
+
+glossary:
+
+  revenue:
+    definition: "Calculated order value equal to merchandise value plus freight."
+    warehouse_columns:
+      - "marts.fct_orders.calculated_order_value"
+
+  gmv:
+    definition: "Merchandise value before freight."
+    warehouse_columns:
+      - "marts.fct_orders.item_value"
+
+  active_customer:
+    definition: "Business customer with at least one order in the selected period."
+    warehouse_columns:
+      - "marts.fct_orders.customer_unique_id"
+
+  order:
+    definition: "Customer purchase transaction identified by order_id."
+    warehouse_columns:
+      - "marts.fct_orders.order_id"
+
+  order_item:
+    definition: "Individual product line within an order."
+    warehouse_columns:
+      - "marts.fct_order_items.order_id"
+      - "marts.fct_order_items.order_item_id"
+
+  customer:
+    definition: "Business customer identified across customer records by customer_unique_id."
+    warehouse_columns:
+      - "marts.dim_customer.customer_unique_id"
+      - "marts.dim_customer.customer_id"
+
+  seller:
+    definition: "Merchant associated with an order item."
+    warehouse_columns:
+      - "marts.dim_sellers.seller_id"
+      - "marts.fct_order_items.seller_id"
+
+  late_delivery:
+    definition: "Delivery occurring after the estimated delivery date."
+    warehouse_columns:
+      - "marts.fct_orders.delivery_delay_days"
+
+  on_time_delivery:
+    definition: "Delivery occurring on or before the estimated delivery date."
+    warehouse_columns:
+      - "marts.fct_orders.delivery_delay_days"
+
+  review_score:
+    definition: "Customer-provided review score on a 1-to-5 scale, represented at the order-review grain."
+    warehouse_columns:
+      - "marts.fct_reviews.review_score"
+
+  payment_reconciliation:
+    definition: "Comparison between calculated order value and recorded payment value."
+    warehouse_columns:
+      - "marts.fct_orders.calculated_order_value"
+      - "marts.fct_orders.payment_value"
+      - "marts.fct_orders.payment_reconciliation_status"
+
+  calendar_quarter:
+    definition: "Calendar quarter derived from the order date."
+    warehouse_columns:
+      - "marts.dim_date.quarter"
+
+  fiscal_quarter:
+    definition: "Fiscal quarter represented by the date dimension. It is distinct from calendar quarter."
+    warehouse_columns:
+      - "marts.dim_date.fiscal_quarter"
+pii_columns:
+
+  - "marts.dim_customer.customer_id"
+  - "marts.dim_customer.customer_unique_id"
+  - "marts.fct_orders.customer_id"
+  - "marts.fct_orders.customer_unique_id"

@@ -1,0 +1,176 @@
+version: 1
+
+metrics:
+
+  - name: revenue
+    label: Revenue
+    definition: "Total calculated order value, defined as item value plus freight value."
+    sql: "SUM(calculated_order_value)"
+    filters:
+      - "calculated_order_value IS NOT NULL"
+    grain: "order"
+    caveats: "Excludes orders without order-item records because calculated_order_value is unavailable. This is not the same as recorded payment value."
+
+  - name: gmv
+    label: GMV
+    definition: "Total merchandise value before freight, calculated from item value."
+    sql: "SUM(item_value)"
+    filters:
+      - "item_value IS NOT NULL"
+    grain: "order"
+    caveats: "GMV excludes freight charges. Orders without order-item records are excluded."
+
+  - name: active_customer
+    label: Active Customer
+    definition: "A distinct business customer with at least one order in the selected period."
+    sql: "COUNT(DISTINCT customer_unique_id)"
+    filters:
+      - "order_id IS NOT NULL"
+    grain: "customer"
+    caveats: "Uses customer_unique_id rather than customer_id because one business customer can have multiple customer records."
+
+  - name: aov
+    label: Average Order Value
+    definition: "Average calculated order value across orders with a calculated order value."
+    sql: "SUM(calculated_order_value) / NULLIF(COUNT(DISTINCT order_id) FILTER (WHERE calculated_order_value IS NOT NULL), 0)"
+    filters:
+      - "calculated_order_value IS NOT NULL"
+    grain: "order"
+    caveats: "Excludes orders without order-item records."
+
+  - name: order_count
+    label: Order Count
+    definition: "Number of distinct orders."
+    sql: "COUNT(DISTINCT order_id)"
+    filters: []
+    grain: "order"
+    caveats: "Counts orders regardless of payment or order-item availability."
+
+  - name: delivered_order_rate
+    label: Delivered Order Rate
+    definition: "Share of orders that have a delivered customer timestamp."
+    sql: "COUNT(*) FILTER (WHERE order_delivered_customer_date IS NOT NULL)::numeric / NULLIF(COUNT(*), 0)"
+    filters: []
+    grain: "order"
+    caveats: "An order is considered delivered only when order_delivered_customer_date is populated."
+
+  - name: avg_review_score
+    label: Average Review Score
+    definition: "Average customer review score."
+    sql: "AVG(review_score)"
+    filters:
+      - "review_score IS NOT NULL"
+    grain: "review"
+    caveats: "Review-level metric. An order can have multiple reviews, so it should not be interpreted as a unique-order average without explicit aggregation."
+
+  - name: late_delivery_rate
+    label: Late Delivery Rate
+    definition: "Share of orders delivered after the estimated delivery date."
+    sql: "AVG(CASE WHEN delivery_delay_days > 0 THEN 1.0 ELSE 0.0 END)"
+    filters:
+      - "delivery_delay_days IS NOT NULL"
+    grain: "order"
+    caveats: "Late means delivery_delay_days > 0. Orders without both delivered and estimated delivery timestamps are excluded."
+
+  - name: freight_ratio
+    label: Freight Ratio
+    definition: "Freight value as a share of calculated order value."
+    sql: "SUM(freight_value) / NULLIF(SUM(calculated_order_value), 0)"
+    filters:
+      - "calculated_order_value IS NOT NULL"
+    grain: "order"
+    caveats: "Calculated using item value plus freight value as the denominator."
+
+  - name: repeat_customer_rate
+    label: Repeat Customer Rate
+    definition: "Share of business customers with more than one order."
+    sql: "COUNT(*) FILTER (WHERE total_orders > 1)::numeric / NULLIF(COUNT(*), 0)"
+    filters: []
+    grain: "customer"
+    caveats: "Uses customer_unique_id and requires customer-level aggregation. Multiple customer_id records for one business customer are treated as one customer."
+
+  - name: customer_lifetime_value
+    label: Customer Lifetime Value
+    definition: "Total calculated order value attributed to a business customer across their observed order history."
+    sql: "SUM(total_revenue)"
+    filters:
+      - "total_revenue IS NOT NULL"
+    grain: "customer"
+    caveats: "Observed historical value, not a forward-looking customer lifetime prediction."
+
+  - name: new_customers
+    label: New Customers
+    definition: "Number of business customers whose first observed order occurs in the selected period."
+    sql: "COUNT(*) FILTER (WHERE first_order_date BETWEEN period_start AND period_end)"
+    filters: []
+    grain: "customer"
+    caveats: "Based on the earliest order observed in the available dataset, not necessarily the customer's true first-ever purchase."
+
+  - name: cancelled_order_rate
+    label: Cancelled Order Rate
+    definition: "Share of orders with order status equal to canceled."
+    sql: "COUNT(*) FILTER (WHERE order_status = 'canceled')::numeric / NULLIF(COUNT(*), 0)"
+    filters: []
+    grain: "order"
+    caveats: "Uses the source order_status value and treats 'canceled' as the cancellation status."
+
+  - name: avg_delivery_days
+    label: Average Delivery Days
+    definition: "Average elapsed days from purchase to customer delivery."
+    sql: "AVG(delivery_days)"
+    filters:
+      - "delivery_days IS NOT NULL"
+    grain: "order"
+    caveats: "Only orders with both purchase and delivered-customer timestamps are included."
+
+  - name: on_time_delivery_rate
+    label: On-Time Delivery Rate
+    definition: "Share of delivered orders delivered on or before the estimated delivery date."
+    sql: "AVG(CASE WHEN delivery_delay_days <= 0 THEN 1.0 ELSE 0.0 END)"
+    filters:
+      - "delivery_delay_days IS NOT NULL"
+    grain: "order"
+    caveats: "Only orders with delivery and estimated delivery dates are included."
+
+  - name: revenue_per_seller
+    label: Revenue Per Seller
+    definition: "Average seller-level total sales."
+    sql: "SUM(total_sales) / NULLIF(COUNT(DISTINCT seller_id), 0)"
+    filters: []
+    grain: "seller"
+    caveats: "Seller sales include item price plus freight value."
+
+  - name: revenue_per_state
+    label: Revenue Per State
+    definition: "Average calculated order value attributed to a customer state."
+    sql: "SUM(calculated_order_value) / NULLIF(COUNT(DISTINCT order_id), 0)"
+    filters:
+      - "calculated_order_value IS NOT NULL"
+      - "customer_state IS NOT NULL"
+    grain: "order"
+    caveats: "Revenue is attributed to the customer's state, not the seller's state."
+
+  - name: category_revenue_share
+    label: Category Revenue Share
+    definition: "A product category's share of total item value."
+    sql: "SUM(price) / NULLIF(SUM(SUM(price)) OVER (), 0)"
+    filters:
+      - "product_category_name IS NOT NULL"
+    grain: "order_item"
+    caveats: "Uses item price rather than freight-inclusive calculated order value."
+
+  - name: payment_reconciliation_rate
+    label: Payment Reconciliation Rate
+    definition: "Share of orders where recorded payment value matches calculated order value within one cent."
+    sql: "COUNT(*) FILTER (WHERE payment_reconciliation_status = 'matched')::numeric / NULLIF(COUNT(*), 0)"
+    filters: []
+    grain: "order"
+    caveats: "Matching uses a tolerance of 0.01 and is based on calculated order value versus recorded payment value."
+
+  - name: orders_with_reviews_rate
+    label: Orders With Reviews Rate
+    definition: "Share of orders with at least one review."
+    sql: "COUNT(*) FILTER (WHERE review_count > 0)::numeric / NULLIF(COUNT(*), 0)"
+    filters: []
+    grain: "order"
+    caveats: "An order may have multiple review records; the metric measures whether at least one review exists."

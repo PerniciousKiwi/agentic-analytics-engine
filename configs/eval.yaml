@@ -1,0 +1,33 @@
+﻿bird:
+  source: "huggingface://birdsql/bird_sql_dev_20251106"
+  bird_commit_hash: "3c11fb1"
+  bird_subset_size: 200
+  bird_seed: 20260821
+  # Challenging questions are deliberately oversampled to stress-test
+  # the guarded and repair pipeline. This subset is not directly
+  # comparable with published BIRD leaderboard proportions.
+  bird_stratify_by: "difficulty"
+  bird_strata_targets:
+    simple: 112
+    moderate: 58
+    challenging: 30
+  source_row_count: 1534
+  source_difficulty_counts:
+    simple: 860
+    moderate: 443
+    challenging: 231
+  questions_path: "eval/suites/bird_dev_200.jsonl"
+  databases_path: "data/bird/dev_databases"
+
+bird_commit_hash: "3c11fb1"
+bird_subset_size: 200
+bird_stratify_by: "difficulty"
+bird_sample_seed: 20260821
+
+olist_gold_path: "eval/suites/olist_gold_150.jsonl"
+ambiguity_path: "eval/suites/ambiguity_100.jsonl"
+
+olist:
+  database: "postgres"
+
+float_tolerance: 1.0e-6

@@ -1,14 +1,14 @@
 # Evaluation Results — bird_dev_200
 
-Generated: 2026-08-21T09:02:38.137614+00:00
+Generated: 2026-08-21T17:09:32.937878+00:00
 
 | Metric | Value |
 |---|---:|
 | Question count | 200 |
-| Accuracy | 100.00% |
-| Mean latency (ms) | 6774.61 |
-| Mean tokens in | 0.00 |
-| Mean tokens out | 0.00 |
+| Accuracy | 29.00% |
+| Mean latency (ms) | 12425.03 |
+| Mean tokens in | 910.55 |
+| Mean tokens out | 65.14 |
 
 ## Latency Distribution
 

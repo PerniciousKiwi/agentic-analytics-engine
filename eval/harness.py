@@ -12,6 +12,7 @@ from typing import Any
 import psycopg
 
 from eval.execution_accuracy import rows_equal
+from eval.systems.baseline import BaselineSystem
 from eval.systems.oracle import OracleSystem
 from eval.systems.protocol import EvaluationSystem
 
@@ -28,12 +29,14 @@ RESULT_FIELDS = (
     "latency_ms",
     "tokens_in",
     "tokens_out",
+    "prompt_hash",
     "confidence",
     "abstained",
     "failure_class",
 )
 
 SYSTEMS: dict[str, type[EvaluationSystem]] = {
+    "baseline": BaselineSystem,
     "oracle": OracleSystem,
 }
 
@@ -183,6 +186,7 @@ def build_result_record(
         "latency_ms": latency_ms,
         "tokens_in": metadata.get("tokens_in"),
         "tokens_out": metadata.get("tokens_out"),
+        "prompt_hash": metadata.get("prompt_hash"),
         "confidence": metadata.get("confidence"),
         "abstained": metadata.get("abstained", False),
         "failure_class": metadata.get("failure_class"),
@@ -233,6 +237,7 @@ def run_suite(
                     )
 
                     db_context = {
+                        "source": "sqlite",
                         "db_id": record.get("db_id"),
                         "database_path": database_path,
                         "gold_sql": gold_sql,
@@ -258,6 +263,7 @@ def run_suite(
 
                 elif suite_name == "olist_gold_150":
                     db_context = {
+                        "source": "postgres",
                         "db_id": None,
                         "database_path": None,
                         "gold_sql": gold_sql,
@@ -382,12 +388,17 @@ def main() -> None:
     print(f"System:      {args.system}")
     print(f"Questions:   {len(suite)}")
 
-    results = run_suite(
-        suite=suite,
-        system=system,
-        config=config,
-        suite_name=args.suite,
-    )
+    try:
+        results = run_suite(
+            suite_name=args.suite,
+            suite=suite,
+            system=system,
+            config=config,
+        )
+    finally:
+        close = getattr(system, "close", None)
+        if callable(close):
+            close()
 
     output_path = write_results(
         suite_name=args.suite,

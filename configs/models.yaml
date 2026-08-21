@@ -1,0 +1,15 @@
+model_fast: qwen2.5-coder:7b-instruct-q4_K_M
+model_strong: qwen2.5-coder:7b-instruct-q4_K_M
+
+context_window:
+  fast: 32768
+  strong: 32768
+
+max_output_tokens:
+  fast: 2048
+  strong: 2048
+
+# Baseline is deterministic; Phase 8 intentionally introduces temperature variance for self-consistency.
+temperature:
+  fast: 0.0
+  strong: 0.0

@@ -1,14 +1,14 @@
 # Evaluation Results — olist_gold_150
 
-Generated: 2026-08-21T08:39:25.799095+00:00
+Generated: 2026-08-21T15:01:50.396080+00:00
 
 | Metric | Value |
 |---|---:|
 | Question count | 150 |
-| Accuracy | 100.00% |
-| Mean latency (ms) | 227.76 |
-| Mean tokens in | 0.00 |
-| Mean tokens out | 0.00 |
+| Accuracy | 38.67% |
+| Mean latency (ms) | 5516.96 |
+| Mean tokens in | 856.42 |
+| Mean tokens out | 52.27 |
 
 ## Latency Distribution
 

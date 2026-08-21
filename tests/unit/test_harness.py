@@ -17,6 +17,7 @@ def test_result_fields_match_phase_2_contract() -> None:
         "latency_ms",
         "tokens_in",
         "tokens_out",
+        "prompt_hash",
         "confidence",
         "abstained",
         "failure_class",

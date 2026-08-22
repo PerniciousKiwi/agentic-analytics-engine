@@ -1,0 +1,7 @@
+pii:
+  default_role: analyst
+  roles:
+    analyst:
+      allow_pii: false
+    privileged:
+      allow_pii: true

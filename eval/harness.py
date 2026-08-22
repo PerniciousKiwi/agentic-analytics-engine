@@ -13,6 +13,7 @@ import psycopg
 
 from eval.execution_accuracy import rows_equal
 from eval.systems.baseline import BaselineSystem
+from eval.systems.baseline_guarded import BaselineGuardedSystem
 from eval.systems.oracle import OracleSystem
 from eval.systems.protocol import EvaluationSystem
 
@@ -37,6 +38,7 @@ RESULT_FIELDS = (
 
 SYSTEMS: dict[str, type[EvaluationSystem]] = {
     "baseline": BaselineSystem,
+    "baseline_guarded": BaselineGuardedSystem,
     "oracle": OracleSystem,
 }
 
@@ -190,6 +192,8 @@ def build_result_record(
         "confidence": metadata.get("confidence"),
         "abstained": metadata.get("abstained", False),
         "failure_class": metadata.get("failure_class"),
+        "error": metadata.get("error"),
+        "sqlstate": metadata.get("sqlstate"),
     }
 
 
@@ -293,15 +297,29 @@ def run_suite(
                     float_tol=float_tolerance,
                 )
 
+        except psycopg.Error as exc:
+            executed_ok = False
+            correct = False
+
+            metadata["error"] = str(exc)
+            metadata["sqlstate"] = exc.sqlstate
+
+            if exc.sqlstate:
+                metadata["failure_class"] = exc.sqlstate
+            else:
+                metadata["failure_class"] = type(exc).__name__
+
         except (
             sqlite3.Error,
-            psycopg.Error,
             ValueError,
             TypeError,
             KeyError,
-        ):
+        ) as exc:
             executed_ok = False
             correct = False
+            metadata["error"] = str(exc)
+            metadata["sqlstate"] = getattr(exc, "sqlstate", None)
+            metadata["failure_class"] = type(exc).__name__
 
         latency_ms = (time.perf_counter() - start) * 1000
 
@@ -322,16 +340,18 @@ def run_suite(
 
 def write_results(
     suite_name: str,
+    system_name: str,
     results: list[dict[str, Any]],
 ) -> Path:
     """Write timestamped evaluation results."""
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    output_path = RESULTS_DIR / f"{suite_name}_{timestamp}.json"
+    output_path = RESULTS_DIR / f"{suite_name}_{system_name}_{timestamp}.json"
 
     payload = {
         "suite": suite_name,
+        "system": system_name,
         "generated_at": datetime.now(UTC).isoformat(),
         "results": results,
     }
@@ -402,6 +422,7 @@ def main() -> None:
 
     output_path = write_results(
         suite_name=args.suite,
+        system_name=args.system,
         results=results,
     )
 

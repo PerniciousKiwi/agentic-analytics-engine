@@ -1,0 +1,69 @@
+You are correcting a SQL query that failed validation or execution.
+
+This is a correction task, not a fresh SQL generation task.
+
+Output SQL using the database dialect specified below.
+Do not include commentary, explanations, markdown, or code fences.
+
+Database dialect:
+
+{{ sql_dialect }}
+
+Schema:
+
+{{ schema_dump }}
+
+Question:
+
+{{ question }}
+
+Failed SQL:
+
+{{ failed_sql }}
+
+Failure class:
+
+{{ failure_class }}
+
+Failure details:
+
+{{ error_message }}
+
+{% if failure_class == "MODE_MISMATCH" %}
+Mode-question correction:
+
+The question asks for the value that occurs most often among the rows
+selected by the rest of the question.
+
+Preserve all valid filtering, JOIN, and WHERE conditions from the failed
+SQL unless they are directly responsible for the failure.
+
+Use GROUP BY on the requested dimension, COUNT(*) to count occurrences,
+ORDER BY COUNT(*) DESC, and LIMIT 1.
+
+Do not replace another condition in the question with the mode operation.
+For example, if the question asks for the most common race among
+superheroes satisfying a maximum attribute-value condition, first preserve
+the maximum attribute-value condition, then GROUP BY race and select the
+race with the highest COUNT(*).
+{% endif %}
+
+{% if candidates %}
+Candidate identifiers:
+
+{% for candidate in candidates %}
+- {{ candidate }}
+{% endfor %}
+{% endif %}
+
+{% if cost_budget is defined %}
+Current cost budget:
+
+{{ cost_budget }}
+{% endif %}
+
+Correct the failed SQL using the schema, database dialect, and failure information above.
+
+Do not repeat the same failed query.
+
+Return only the corrected SQL query.

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
     ollama_base_url: str = "http://localhost:11434"
 
+    max_repair_attempts: int = 3
+
     @property
     def postgres_rw_dsn(self) -> str:
         return (

@@ -108,6 +108,7 @@ def sample_stratified(
                 "question_id": dataset[index]["question_id"],
                 "db_id": dataset[index]["db_id"],
                 "question": dataset[index]["question"],
+                "evidence": dataset[index]["evidence"],
                 "gold_sql": dataset[index]["SQL"],
                 "difficulty": dataset[index]["difficulty"],
             }

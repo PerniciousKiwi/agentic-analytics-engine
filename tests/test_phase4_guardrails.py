@@ -175,3 +175,15 @@ def test_pipeline_applies_limit() -> None:
 
     assert result.result.allowed is True
     assert "LIMIT 100" in result.sql
+
+
+def test_pipeline_can_skip_limit_for_evaluation() -> None:
+    result = run_guardrails(
+        "SELECT * FROM marts.fct_orders",
+        CATALOG,
+        max_rows=100,
+        enforce_result_limit=False,
+    )
+
+    assert result.result.allowed is True
+    assert "LIMIT" not in result.sql.upper()

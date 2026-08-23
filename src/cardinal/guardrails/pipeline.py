@@ -8,6 +8,10 @@ from cardinal.guardrails.catalog_check import check_catalog
 from cardinal.guardrails.join_check import check_cartesian_join
 from cardinal.guardrails.limit_check import enforce_limit
 from cardinal.guardrails.pii_check import check_pii
+from cardinal.guardrails.semantic_check import (
+    check_mode_question_shape,
+    check_superlative,
+)
 
 
 @dataclass
@@ -20,10 +24,12 @@ def run_guardrails(
     sql: str,
     catalog: Catalog,
     *,
+    question: str | None = None,
     role: str = "analyst",
     max_rows: int = 1000,
+    enforce_result_limit: bool = True,
 ) -> GuardrailResult:
-    """Run Phase 4 guardrails in their required order."""
+    """Run Phase 4 guardrails plus semantic checks."""
 
     result = check_read_only(sql)
     if not result.allowed:
@@ -41,6 +47,21 @@ def run_guardrails(
     if not result.allowed:
         return GuardrailResult(sql=sql, result=result)
 
-    sql, result = enforce_limit(sql, max_rows)
+    result = check_superlative(sql, question)
+    if not result.allowed:
+        return GuardrailResult(sql=sql, result=result)
 
-    return GuardrailResult(sql=sql, result=result)
+    result = check_mode_question_shape(sql, question)
+    if not result.allowed:
+        return GuardrailResult(sql=sql, result=result)
+
+    if enforce_result_limit:
+        sql, result = enforce_limit(sql, max_rows)
+
+    return GuardrailResult(
+        sql=sql,
+        result=GuardResult(
+            allowed=True,
+            reasons=[],
+        ),
+    )

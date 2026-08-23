@@ -26,6 +26,8 @@ class LLMResponse:
     tokens_out: int
     latency_ms: float
     model: str
+    attempts: int
+    retried: bool
 
 
 class _RetryableServerError(Exception):
@@ -109,7 +111,7 @@ class OllamaClient:
         decorated_request = retry(
             stop=stop_any(
                 stop_after_attempt(3),
-                stop_after_delay(120),
+                stop_after_delay(300),
             ),
             wait=wait_random_exponential(
                 multiplier=1,
@@ -173,4 +175,6 @@ class OllamaClient:
             tokens_out=tokens_out,
             latency_ms=latency_ms,
             model=request_model,
+            attempts=attempts,
+            retried=attempts > 1,
         )

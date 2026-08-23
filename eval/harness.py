@@ -11,9 +11,11 @@ from typing import Any
 
 import psycopg
 
+from cardinal.agent.repair import classify_failure
 from eval.execution_accuracy import rows_equal
 from eval.systems.baseline import BaselineSystem
 from eval.systems.baseline_guarded import BaselineGuardedSystem
+from eval.systems.baseline_repaired import BaselineRepairedSystem
 from eval.systems.oracle import OracleSystem
 from eval.systems.protocol import EvaluationSystem
 
@@ -34,11 +36,14 @@ RESULT_FIELDS = (
     "confidence",
     "abstained",
     "failure_class",
+    "repair_attempts",
+    "degraded",
 )
 
 SYSTEMS: dict[str, type[EvaluationSystem]] = {
     "baseline": BaselineSystem,
     "baseline_guarded": BaselineGuardedSystem,
+    "baseline_repaired": BaselineRepairedSystem,
     "oracle": OracleSystem,
 }
 
@@ -188,10 +193,14 @@ def build_result_record(
         "latency_ms": latency_ms,
         "tokens_in": metadata.get("tokens_in"),
         "tokens_out": metadata.get("tokens_out"),
+        "llm_attempts": metadata.get("llm_attempts"),
+        "llm_retried": metadata.get("llm_retried"),
         "prompt_hash": metadata.get("prompt_hash"),
         "confidence": metadata.get("confidence"),
         "abstained": metadata.get("abstained", False),
         "failure_class": metadata.get("failure_class"),
+        "repair_attempts": metadata.get("repair_attempts", 0),
+        "degraded": metadata.get("degraded", False),
         "error": metadata.get("error"),
         "sqlstate": metadata.get("sqlstate"),
     }
@@ -303,11 +312,7 @@ def run_suite(
 
             metadata["error"] = str(exc)
             metadata["sqlstate"] = exc.sqlstate
-
-            if exc.sqlstate:
-                metadata["failure_class"] = exc.sqlstate
-            else:
-                metadata["failure_class"] = type(exc).__name__
+            metadata["failure_class"] = classify_failure(exc).value
 
         except (
             sqlite3.Error,
@@ -319,7 +324,10 @@ def run_suite(
             correct = False
             metadata["error"] = str(exc)
             metadata["sqlstate"] = getattr(exc, "sqlstate", None)
-            metadata["failure_class"] = type(exc).__name__
+
+            # Evaluation/harness failures are not SQL failure classes.
+            # Keep the result taxonomy constrained to FailureClass values.
+            metadata["failure_class"] = "OTHER"
 
         latency_ms = (time.perf_counter() - start) * 1000
 
@@ -389,6 +397,18 @@ def parse_args() -> argparse.Namespace:
         required=True,
         choices=tuple(sorted(SYSTEMS)),
     )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Run only the first N questions.",
+    )
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        help="Skip the first N questions.",
+    )
     return parser.parse_args()
 
 
@@ -402,6 +422,15 @@ def main() -> None:
         args.suite,
     )
     suite = load_suite(suite_path)
+    if args.offset < 0:
+        raise ValueError("--offset must be zero or greater.")
+
+    if args.limit is not None:
+        if args.limit <= 0:
+            raise ValueError("--limit must be greater than zero.")
+        suite = suite[args.offset : args.offset + args.limit]
+    else:
+        suite = suite[args.offset :]
     system = resolve_system(args.system)
 
     print(f"Suite:       {args.suite}")

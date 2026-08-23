@@ -46,6 +46,8 @@ async def test_successful_response_parses_tokens() -> None:
         assert result.tokens_in == 42
         assert result.tokens_out == 8
         assert result.model == "qwen2.5-coder:7b-instruct-q4_K_M"
+        assert result.attempts == 1
+        assert result.retried is False
         assert result.latency_ms >= 0
     finally:
         await client.http_client.aclose()
@@ -80,6 +82,8 @@ async def test_server_error_retries_and_succeeds_on_second_attempt() -> None:
 
         assert result.text == "SELECT 2;"
         assert attempts == 2
+        assert result.attempts == 2
+        assert result.retried is True
     finally:
         await client.http_client.aclose()
 

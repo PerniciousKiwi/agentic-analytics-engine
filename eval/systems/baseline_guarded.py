@@ -38,6 +38,7 @@ class BaselineGuardedSystem(BaselineSystem):
             self.catalog,
             role="analyst",
             max_rows=1000,
+            enforce_result_limit=False,
         )
 
         result = guardrail_result.result

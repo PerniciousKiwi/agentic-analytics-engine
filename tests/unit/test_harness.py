@@ -21,6 +21,8 @@ def test_result_fields_match_phase_2_contract() -> None:
         "confidence",
         "abstained",
         "failure_class",
+        "repair_attempts",
+        "degraded",
     )
 
 
@@ -50,3 +52,41 @@ def test_load_suite_rejects_invalid_json(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Invalid JSON"):
         load_suite(suite_path)
+
+
+def test_run_suite_classifies_missing_predicted_sql_as_other() -> None:
+    class EmptySystem:
+        def answer(
+            self,
+            question: str,
+            db_context: dict,
+        ) -> tuple[str, dict]:
+            return "", {}
+
+    suite = [
+        {
+            "question": "How many business customers have placed at least one order?",
+            "gold_sql": "SELECT 1;",
+            "db_id": None,
+        }
+    ]
+
+    config = {
+        "float_tolerance": 1e-6,
+    }
+
+    from eval.harness import run_suite
+
+    results = run_suite(
+        suite=suite,
+        system=EmptySystem(),
+        config=config,
+        suite_name="olist_gold_150",
+    )
+
+    assert len(results) == 1
+    assert results[0]["predicted_sql"] == ""
+    assert results[0]["executed_ok"] is False
+    assert results[0]["correct"] is False
+    assert results[0]["failure_class"] == "OTHER"
+    assert results[0]["error"] == "Evaluation system returned no predicted SQL."

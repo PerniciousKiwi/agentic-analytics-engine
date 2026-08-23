@@ -148,7 +148,7 @@ class BaselineSystem:
         self.client = OllamaClient(
             base_url=settings.ollama_base_url,
             model=self.model,
-            timeout=120.0,
+            timeout=300.0,
             http_client=self.http_client,
         )
 
@@ -202,6 +202,8 @@ class BaselineSystem:
             "tokens_out": response.tokens_out,
             "latency_ms": response.latency_ms,
             "prompt_hash": self.prompt_hash,
+            "llm_attempts": response.attempts,
+            "llm_retried": response.retried,
         }
 
         return predicted_sql, metadata

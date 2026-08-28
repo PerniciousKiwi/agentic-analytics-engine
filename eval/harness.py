@@ -18,6 +18,7 @@ from eval.systems.baseline_guarded import BaselineGuardedSystem
 from eval.systems.baseline_repaired import BaselineRepairedSystem
 from eval.systems.oracle import OracleSystem
 from eval.systems.protocol import EvaluationSystem
+from eval.systems.retrieval_guarded_repaired import RetrievalGuardedRepairedSystem
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "configs" / "eval.yaml"
@@ -45,6 +46,7 @@ SYSTEMS: dict[str, type[EvaluationSystem]] = {
     "baseline_guarded": BaselineGuardedSystem,
     "baseline_repaired": BaselineRepairedSystem,
     "oracle": OracleSystem,
+    "retrieval_guarded_repaired": RetrievalGuardedRepairedSystem,
 }
 
 

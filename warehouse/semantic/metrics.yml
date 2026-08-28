@@ -10,6 +10,8 @@ metrics:
       - "calculated_order_value IS NOT NULL"
     grain: "order"
     caveats: "Excludes orders without order-item records because calculated_order_value is unavailable. This is not the same as recorded payment value."
+    tables:
+          - "marts.fct_orders"
 
   - name: gmv
     label: GMV
@@ -19,6 +21,8 @@ metrics:
       - "item_value IS NOT NULL"
     grain: "order"
     caveats: "GMV excludes freight charges. Orders without order-item records are excluded."
+    tables:
+          - "marts.fct_orders"
 
   - name: active_customer
     label: Active Customer
@@ -28,6 +32,8 @@ metrics:
       - "order_id IS NOT NULL"
     grain: "customer"
     caveats: "Uses customer_unique_id rather than customer_id because one business customer can have multiple customer records."
+    tables:
+          - "marts.fct_orders"
 
   - name: aov
     label: Average Order Value
@@ -37,6 +43,8 @@ metrics:
       - "calculated_order_value IS NOT NULL"
     grain: "order"
     caveats: "Excludes orders without order-item records."
+    tables:
+          - "marts.fct_orders"
 
   - name: order_count
     label: Order Count
@@ -45,6 +53,8 @@ metrics:
     filters: []
     grain: "order"
     caveats: "Counts orders regardless of payment or order-item availability."
+    tables:
+          - "marts.fct_orders"
 
   - name: delivered_order_rate
     label: Delivered Order Rate
@@ -53,6 +63,9 @@ metrics:
     filters: []
     grain: "order"
     caveats: "An order is considered delivered only when order_delivered_customer_date is populated."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: avg_review_score
     label: Average Review Score
@@ -62,6 +75,9 @@ metrics:
       - "review_score IS NOT NULL"
     grain: "review"
     caveats: "Review-level metric. An order can have multiple reviews, so it should not be interpreted as a unique-order average without explicit aggregation."
+    tables:
+          - "marts.fct_reviews"
+
 
   - name: late_delivery_rate
     label: Late Delivery Rate
@@ -71,6 +87,9 @@ metrics:
       - "delivery_delay_days IS NOT NULL"
     grain: "order"
     caveats: "Late means delivery_delay_days > 0. Orders without both delivered and estimated delivery timestamps are excluded."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: freight_ratio
     label: Freight Ratio
@@ -80,6 +99,9 @@ metrics:
       - "calculated_order_value IS NOT NULL"
     grain: "order"
     caveats: "Calculated using item value plus freight value as the denominator."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: repeat_customer_rate
     label: Repeat Customer Rate
@@ -88,6 +110,8 @@ metrics:
     filters: []
     grain: "customer"
     caveats: "Uses customer_unique_id and requires customer-level aggregation. Multiple customer_id records for one business customer are treated as one customer."
+    tables:
+          - "marts.agg_customer_lifetime"
 
   - name: customer_lifetime_value
     label: Customer Lifetime Value
@@ -97,6 +121,9 @@ metrics:
       - "total_revenue IS NOT NULL"
     grain: "customer"
     caveats: "Observed historical value, not a forward-looking customer lifetime prediction."
+    tables:
+          - "marts.agg_customer_lifetime"
+
 
   - name: new_customers
     label: New Customers
@@ -105,6 +132,9 @@ metrics:
     filters: []
     grain: "customer"
     caveats: "Based on the earliest order observed in the available dataset, not necessarily the customer's true first-ever purchase."
+    tables:
+          - "marts.agg_customer_lifetime"
+
 
   - name: cancelled_order_rate
     label: Cancelled Order Rate
@@ -113,6 +143,9 @@ metrics:
     filters: []
     grain: "order"
     caveats: "Uses the source order_status value and treats 'canceled' as the cancellation status."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: avg_delivery_days
     label: Average Delivery Days
@@ -122,6 +155,9 @@ metrics:
       - "delivery_days IS NOT NULL"
     grain: "order"
     caveats: "Only orders with both purchase and delivered-customer timestamps are included."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: on_time_delivery_rate
     label: On-Time Delivery Rate
@@ -131,6 +167,9 @@ metrics:
       - "delivery_delay_days IS NOT NULL"
     grain: "order"
     caveats: "Only orders with delivery and estimated delivery dates are included."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: revenue_per_seller
     label: Revenue Per Seller
@@ -139,6 +178,9 @@ metrics:
     filters: []
     grain: "seller"
     caveats: "Seller sales include item price plus freight value."
+    tables:
+          - "marts.agg_seller_performance"
+
 
   - name: revenue_per_state
     label: Revenue Per State
@@ -149,6 +191,9 @@ metrics:
       - "customer_state IS NOT NULL"
     grain: "order"
     caveats: "Revenue is attributed to the customer's state, not the seller's state."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: category_revenue_share
     label: Category Revenue Share
@@ -158,6 +203,9 @@ metrics:
       - "product_category_name IS NOT NULL"
     grain: "order_item"
     caveats: "Uses item price rather than freight-inclusive calculated order value."
+    tables:
+          - "marts.fct_order_items"
+
 
   - name: payment_reconciliation_rate
     label: Payment Reconciliation Rate
@@ -166,6 +214,9 @@ metrics:
     filters: []
     grain: "order"
     caveats: "Matching uses a tolerance of 0.01 and is based on calculated order value versus recorded payment value."
+    tables:
+          - "marts.fct_orders"
+
 
   - name: orders_with_reviews_rate
     label: Orders With Reviews Rate
@@ -174,3 +225,5 @@ metrics:
     filters: []
     grain: "order"
     caveats: "An order may have multiple review records; the metric measures whether at least one review exists."
+    tables:
+          - "marts.fct_orders"

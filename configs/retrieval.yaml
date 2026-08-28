@@ -1,0 +1,26 @@
+embedding:
+  model_name: "BAAI/bge-small-en-v1.5"
+  dimension: 384
+
+qdrant:
+  collection_name: "schema_cards"
+  distance: "cosine"
+
+sparse:
+  top_k: 50
+
+dense:
+  top_k: 50
+
+fusion:
+  k: 60
+
+rerank:
+  batch_size: 16
+  input_top_k: 50
+  output_top_k: 10
+
+pruning:
+  max_tables: 8
+  max_columns_per_table: 25
+  always_include_metrics: true

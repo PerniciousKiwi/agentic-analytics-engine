@@ -1,0 +1,4 @@
+profiling:
+  low_cardinality_threshold: 50
+  top_values_limit: 10
+  sample_rows: 3

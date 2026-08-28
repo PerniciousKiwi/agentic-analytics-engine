@@ -17,6 +17,12 @@ Question:
 
 {{ question }}
 
+{% if metrics_context %}
+[CANONICAL METRICS — AUTHORITATIVE]
+{{ metrics_context }}
+[/CANONICAL METRICS — AUTHORITATIVE]
+{% endif %}
+
 Failed SQL:
 
 {{ failed_sql }}
@@ -46,6 +52,23 @@ For example, if the question asks for the most common race among
 superheroes satisfying a maximum attribute-value condition, first preserve
 the maximum attribute-value condition, then GROUP BY race and select the
 race with the highest COUNT(*).
+{% endif %}
+
+{% if failure_class == "CANONICAL_METRIC_MISMATCH" %}
+Canonical metric correction:
+
+The generated SQL changed the canonical metric calculation.
+
+Use the canonical metric calculation from the supplied schema/metric
+context exactly as defined.
+
+Do not multiply or divide the calculation.
+Do not add percentage scaling.
+Do not replace it with an algebraically equivalent expression.
+
+Preserve the canonical metric's filters, grain, and source table.
+
+Return the canonical metric calculation in the corrected SQL.
 {% endif %}
 
 {% if candidates %}

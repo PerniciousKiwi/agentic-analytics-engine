@@ -5,6 +5,7 @@ import re
 import sqlglot
 from sqlglot import exp
 
+from cardinal.catalog.models import Metric
 from cardinal.guardrails.ast_checks import GuardResult
 
 _SUPERLATIVE_PATTERNS: tuple[tuple[tuple[str, ...], str, str], ...] = (
@@ -242,6 +243,70 @@ def check_mode_question_shape(
                 "but SQL does not preserve the MAX() condition",
             ],
         )
+
+    return GuardResult(
+        allowed=True,
+        reasons=[],
+    )
+
+
+def check_canonical_metric(
+    sql: str,
+    metrics: list[Metric],
+) -> GuardResult:
+    """Ensure a uniquely selected canonical metric is not transformed."""
+    if len(metrics) != 1:
+        return GuardResult(
+            allowed=True,
+            reasons=[],
+        )
+
+    metric = metrics[0]
+
+    try:
+        expression = sqlglot.parse_one(
+            sql,
+            read="postgres",
+        )
+        canonical = sqlglot.parse_one(
+            metric.sql,
+            read="postgres",
+        )
+    except sqlglot.errors.ParseError:
+        return GuardResult(
+            allowed=True,
+            reasons=[],
+        )
+
+    select_expressions = expression.expressions
+
+    if len(select_expressions) != 1:
+        return GuardResult(
+            allowed=True,
+            reasons=[],
+        )
+
+    generated = select_expressions[0]
+
+    if isinstance(generated, exp.Alias):
+        generated = generated.this
+
+    if isinstance(generated, exp.Mul):
+        left = generated.this
+        right = generated.expression
+
+        if isinstance(left, exp.Paren):
+            left = left.this
+
+        if right.is_number and left == canonical:
+            return GuardResult(
+                allowed=False,
+                reasons=[
+                    "CANONICAL_METRIC_MISMATCH: "
+                    f"metric {metric.name!r} was transformed "
+                    "instead of using its canonical calculation exactly",
+                ],
+            )
 
     return GuardResult(
         allowed=True,

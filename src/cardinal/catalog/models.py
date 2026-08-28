@@ -9,6 +9,7 @@ class Metric(BaseModel):
     filters: list[str]
     grain: str
     caveats: str
+    tables: list[str]
 
 
 class GlossaryEntry(BaseModel):

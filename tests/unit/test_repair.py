@@ -521,3 +521,21 @@ def test_repair_loop_respects_max_attempts() -> None:
     assert result.succeeded is False
     assert result.sql is None
     assert len(result.attempts) == 3
+
+
+def test_mode_mismatch_has_dedicated_failure_class() -> None:
+    result = GuardResult(
+        allowed=False,
+        reasons=["MODE_MISMATCH: expected mode query"],
+    )
+
+    assert classify_failure(result) == FailureClass.MODE_MISMATCH
+
+
+def test_superlative_mismatch_has_dedicated_failure_class() -> None:
+    result = GuardResult(
+        allowed=False,
+        reasons=["SUPERLATIVE_MISMATCH: expected ordering"],
+    )
+
+    assert classify_failure(result) == FailureClass.SUPERLATIVE_MISMATCH

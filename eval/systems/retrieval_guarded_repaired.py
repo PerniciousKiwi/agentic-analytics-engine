@@ -49,8 +49,14 @@ class RetrievalGuardedRepairedSystem(BaselineSystem):
         )
 
         self.retrieval = RetrievalService()
-        self.context_assembler = SchemaContextAssembler()
+        self.context_assembler = SchemaContextAssembler(
+            catalog=self.catalog,
+        )
         self._last_context = None
+        self._last_context = None
+        self._last_metrics_context = None
+        self._last_glossary_context = None
+        self._last_table_notes_context = None
 
     def _load_sqlite_catalog(
         self,
@@ -167,14 +173,21 @@ class RetrievalGuardedRepairedSystem(BaselineSystem):
 
         context = self.context_assembler.assemble(
             response.results,
-            metrics,
+            required_tables=[table for metric in metrics for table in metric.tables],
         )
-
+        metrics_context = self.context_assembler._format_metrics(metrics)
+        tables_in_context = self.context_assembler.tables_from_card_ids(context.card_ids)
+        glossary_context = self.context_assembler._format_glossary(question, tables_in_context)
+        table_notes_context = self.context_assembler._format_table_notes(tables_in_context)
         self._last_context = context
-
+        self._last_metrics_context = metrics_context
+        self._last_glossary_context = glossary_context
+        self._last_table_notes_context = table_notes_context
         prompt = self.prompt_template.render(
             schema_context=context.schema,
-            metrics_context=context.metrics,
+            metrics_context=metrics_context,
+            glossary_context=glossary_context,
+            table_notes_context=table_notes_context,
             question=question,
             sql_dialect=sql_dialect,
         )
@@ -221,7 +234,9 @@ class RetrievalGuardedRepairedSystem(BaselineSystem):
             )
 
         schema_context = self._last_context.schema
-        metrics_context = self._last_context.metrics
+        metrics_context = self._last_metrics_context
+        glossary_context = self._last_glossary_context
+        table_notes_context = self._last_table_notes_context
 
         source = db_context.get("source")
 
@@ -235,6 +250,8 @@ class RetrievalGuardedRepairedSystem(BaselineSystem):
         prompt = self.repair_template.render(
             schema_dump=schema_context,
             metrics_context=metrics_context,
+            glossary_context=glossary_context,
+            table_notes_context=table_notes_context,
             question=question,
             sql_dialect=sql_dialect,
             failed_sql=failed_sql,

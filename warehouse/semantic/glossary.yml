@@ -71,9 +71,26 @@ glossary:
     definition: "Fiscal quarter represented by the date dimension. It is distinct from calendar quarter."
     warehouse_columns:
       - "marts.dim_date.fiscal_quarter"
+  
+  payment_record:
+    definition: "An individual payment transaction recorded at payment grain, potentially several per order (installments, split payments)."
+    warehouse_columns:
+      - "marts.fct_payments.payment_value"
+      - "marts.fct_payments.payment_type"
+      - "marts.fct_payments.payment_installments"
+
+  product_category:
+    definition: "Product category name in its original (Portuguese) form, used for canonical grouping and reporting. Distinct from the English-translated column, which is for display only."
+    warehouse_columns:
+      - "marts.dim_products.product_category_name"
+
+table_notes:
+  marts.dim_customer: "This is a slowly-changing dimension with historical rows per customer. Always join using customer_unique_id (not customer_id) and always filter or join with is_current = TRUE, unless the question explicitly asks about historical customer records."
+
 pii_columns:
 
   - "marts.dim_customer.customer_id"
   - "marts.dim_customer.customer_unique_id"
   - "marts.fct_orders.customer_id"
   - "marts.fct_orders.customer_unique_id"
+

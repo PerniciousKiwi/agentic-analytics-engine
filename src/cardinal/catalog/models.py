@@ -21,3 +21,4 @@ class Glossary(BaseModel):
     version: int
     glossary: dict[str, GlossaryEntry]
     pii_columns: list[str]
+    table_notes: dict[str, str] = {}

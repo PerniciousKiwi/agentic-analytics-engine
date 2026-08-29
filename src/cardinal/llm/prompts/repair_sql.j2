@@ -23,6 +23,18 @@ Question:
 [/CANONICAL METRICS — AUTHORITATIVE]
 {% endif %}
 
+{% if glossary_context %}
+[GLOSSARY — CANONICAL BUSINESS TERM DEFINITIONS]
+{{ glossary_context }}
+[/GLOSSARY — CANONICAL BUSINESS TERM DEFINITIONS]
+{% endif %}
+
+{% if table_notes_context %}
+[TABLE USAGE NOTES — STRUCTURAL REQUIREMENTS]
+{{ table_notes_context }}
+[/TABLE USAGE NOTES — STRUCTURAL REQUIREMENTS]
+{% endif %}
+
 Failed SQL:
 
 {{ failed_sql }}
@@ -72,11 +84,18 @@ Return the canonical metric calculation in the corrected SQL.
 {% endif %}
 
 {% if candidates %}
-Candidate identifiers:
+The failed identifier does not exist in the schema. Based on the schema,
+the most likely correct identifier is the FIRST one listed below.
 
+Corrected identifier candidates, most likely first:
 {% for candidate in candidates %}
 - {{ candidate }}
 {% endfor %}
+
+Replace every occurrence of the failed identifier in the query with
+{{ candidates[0] }}. Do not reintroduce the failed identifier anywhere
+in the corrected SQL, including in table aliases, join conditions, or
+qualified column references.
 {% endif %}
 
 {% if cost_budget is defined %}

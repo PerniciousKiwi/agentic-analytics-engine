@@ -49,6 +49,26 @@ the generated SQL must use that expression exactly. It must NOT become:
 {{ metrics_context }}
 [/METRICS — AUTHORITATIVE DEFINITIONS]
 
+{% if glossary_context %}
+[GLOSSARY — CANONICAL BUSINESS TERM DEFINITIONS]
+When a question uses a business term defined below, use the term's
+"Authoritative columns" rather than a similarly-named column on a
+different table, unless the question explicitly asks otherwise.
+
+{{ glossary_context }}
+[/GLOSSARY — CANONICAL BUSINESS TERM DEFINITIONS]
+{% endif %}
+
+{% if table_notes_context %}
+[TABLE USAGE NOTES — STRUCTURAL REQUIREMENTS]
+These notes describe required join conditions or filters for specific
+tables. They apply whenever the table is used, regardless of how the
+question is phrased.
+
+{{ table_notes_context }}
+[/TABLE USAGE NOTES — STRUCTURAL REQUIREMENTS]
+{% endif %}
+
 Follow these rules in priority order:
 
 1. SEMANTIC AUTHORITY

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from dotenv import load_dotenv
 
 from cardinal.agent.repair import classify_failure
 from eval.execution_accuracy import rows_equal
@@ -23,6 +24,8 @@ from eval.systems.retrieval_guarded_repaired import RetrievalGuardedRepairedSyst
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "configs" / "eval.yaml"
 RESULTS_DIR = PROJECT_ROOT / "results"
+
+load_dotenv(PROJECT_ROOT / ".env")
 
 RESULT_FIELDS = (
     "question",

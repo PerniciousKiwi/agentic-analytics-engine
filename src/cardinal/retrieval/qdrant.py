@@ -21,6 +21,12 @@ from cardinal.retrieval.models import RetrievalResult
 class QdrantCardStore:
     """Persist and search schema-card embeddings using Qdrant."""
 
+    # bge-small-en-v1.5 uses asymmetric encoding: queries should be prefixed
+    # with this instruction string before embedding, but indexed passages
+    # (cards) should not be. Getting this wrong degrades dense recall
+    # silently, with no error.
+    QUERY_INSTRUCTION_PREFIX = "Represent this sentence for searching relevant passages:"
+
     def __init__(
         self,
         client: QdrantClient | None = None,
@@ -135,7 +141,7 @@ class QdrantCardStore:
             return []
 
         vector = self.model.encode(
-            query,
+            f"{self.QUERY_INSTRUCTION_PREFIX} {query}",
             normalize_embeddings=True,
         )
 

@@ -1,4 +1,4 @@
-version: 2
+﻿version: 2
 
 models:
 
@@ -37,7 +37,6 @@ models:
     description: "Order-item level fact table."
 
     columns:
-
       - name: order_id
         description: "Order containing the item."
         tests:
@@ -58,8 +57,8 @@ models:
           - not_null
           - relationships:
               arguments:
-               to: ref('dim_products')
-               field: product_id
+                to: ref('dim_products')
+                field: product_id
 
       - name: seller_id
         description: "Seller associated with the order item."
@@ -67,8 +66,65 @@ models:
           - not_null
           - relationships:
               arguments:
-               to: ref('dim_sellers')
-               field: seller_id
+                to: ref('dim_sellers')
+                field: seller_id
+
+
+  - name: fct_payments
+    description: "Payment-level fact table."
+
+    columns:
+      - name: order_id
+        description: "Order associated with the payment."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+
+      - name: payment_sequential
+        description: "Payment sequence number within an order."
+
+      - name: payment_type
+        description: "Payment method."
+
+      - name: payment_installments
+        description: "Number of payment installments."
+
+      - name: payment_value
+        description: "Recorded payment value."
+
+
+  - name: fct_reviews
+    description: >
+      One row per (order_id, review_id). The grain represents a review
+      associated with an order. review_id alone is not unique in the
+      source data because some review_ids are associated with multiple
+      orders.
+
+    columns:
+      - name: order_id
+        description: "Order associated with the review."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+
+      - name: review_id
+        description: "Review identifier from the source."
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_id
+              - review_id
+
 
   - name: dim_customer
     description: "Customer dimension with historical address versions."
@@ -115,28 +171,3 @@ models:
         tests:
           - not_null
           - unique
-
-  - name: fct_reviews
-    description: >
-      One row per (order_id, review_id). The grain represents a review
-      associated with an order. review_id alone is not unique in the
-      source data because some review_ids are associated with multiple
-      orders.
-
-    columns:
-      - name: order_id
-        description: "Order associated with the review."
-        tests:
-          - not_null
-
-      - name: review_id
-        description: "Review identifier from the source."
-        tests:
-          - not_null
-
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - order_id
-              - review_id

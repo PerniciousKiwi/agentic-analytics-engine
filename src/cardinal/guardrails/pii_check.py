@@ -24,17 +24,22 @@ def check_pii(
         )
 
     pii_columns = {column.lower() for column in catalog.glossary.pii_columns}
+    pii_names = {column.split(".")[-1] for column in pii_columns}
 
     reasons: list[str] = []
 
     for column in expression.find_all(exp.Column):
         column_name = column.name.lower()
 
-        for pii_column in pii_columns:
-            pii_name = pii_column.split(".")[-1]
+        if column_name not in pii_names:
+            continue
 
-            if column_name == pii_name:
-                reasons.append(f"PII_COLUMN_FORBIDDEN: {column.name}")
+        # PII may be used internally to establish table relationships.
+        # It must not be exposed or used elsewhere in the query.
+        if column.find_ancestor(exp.Join):
+            continue
+
+        reasons.append(f"PII_COLUMN_FORBIDDEN: {column.name}")
 
     return GuardResult(
         allowed=not reasons,

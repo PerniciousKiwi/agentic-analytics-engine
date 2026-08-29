@@ -82,10 +82,14 @@ def _has_group_by_count(expression: exp.Expression) -> bool:
 def _has_superlative_shape(expression: exp.Expression) -> bool:
     """Return whether SQL uses an explicit superlative shape."""
     has_order_limit = (
-        expression.args.get("limit") is not None and expression.args.get("order") is not None
+        expression.args.get("limit") is not None
+        and expression.args.get("order") is not None
     )
 
-    has_max_min = any(isinstance(node, exp.Max | exp.Min) for node in expression.walk())
+    has_max_min = any(
+        isinstance(node, exp.Max | exp.Min)
+        for node in expression.walk()
+    )
 
     return has_order_limit or has_max_min
 
@@ -216,7 +220,9 @@ def check_mode_question_shape(
             ],
         )
 
-    if is_ambiguous_mode and not (has_group_by_count or _has_superlative_shape(expression)):
+    if is_ambiguous_mode and not (
+        has_group_by_count or _has_superlative_shape(expression)
+    ):
         return GuardResult(
             allowed=False,
             reasons=[
@@ -248,6 +254,14 @@ def check_mode_question_shape(
         allowed=True,
         reasons=[],
     )
+
+
+def _unwrap_parens(expression: exp.Expression) -> exp.Expression:
+    """Remove insignificant parentheses from a SQL expression."""
+    while isinstance(expression, exp.Paren):
+        expression = expression.this
+
+    return expression
 
 
 def check_canonical_metric(
@@ -291,12 +305,26 @@ def check_canonical_metric(
     if isinstance(generated, exp.Alias):
         generated = generated.this
 
-    if isinstance(generated, exp.Mul):
-        left = generated.this
-        right = generated.expression
+    # Parentheses around the canonical metric are semantically
+    # insignificant, so normalize them before comparing ASTs.
+    generated = _unwrap_parens(generated)
+    canonical = _unwrap_parens(canonical)
 
-        if isinstance(left, exp.Paren):
-            left = left.this
+    if generated == canonical:
+        return GuardResult(
+            allowed=True,
+            reasons=[],
+        )
+
+    # Reject transformations such as:
+    #
+    #     canonical_metric * 100
+    #
+    # while still allowing harmless parentheses around the canonical
+    # expression.
+    if isinstance(generated, exp.Mul):
+        left = _unwrap_parens(generated.this)
+        right = _unwrap_parens(generated.expression)
 
         if right.is_number and left == canonical:
             return GuardResult(

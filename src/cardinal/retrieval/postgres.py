@@ -40,13 +40,21 @@ class PostgresCardStore:
                         card_text TEXT NOT NULL,
                         metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
                         search_vector TSVECTOR GENERATED ALWAYS AS (
-                            to_tsvector(
-                                'english',
-                                card_name || ' ' ||
-                                domain || ' ' ||
-                                card_description || ' ' ||
-                                card_values_text || ' ' ||
-                                card_text
+                            setweight(
+                                to_tsvector('english', coalesce(card_name, '')),
+                                'A'
+                            ) ||
+                            setweight(
+                                to_tsvector('english', coalesce(card_description, '')),
+                                'B'
+                            ) ||
+                            setweight(
+                                to_tsvector(
+                                    'english',
+                                    coalesce(card_values_text, '') || ' ' ||
+                                    coalesce(domain, '')
+                                ),
+                                'C'
                             )
                         ) STORED
                     );
@@ -137,11 +145,25 @@ class PostgresCardStore:
                         metadata,
                         ts_rank_cd(
                             search_vector,
-                            websearch_to_tsquery('english', :query)
+                            to_tsquery(
+                                'english',
+                                replace(
+                                    plainto_tsquery('english', :query)::text,
+                                    ' & ',
+                                    ' | '
+                                )
+                            )
                         ) AS score
                     FROM app.schema_cards
                     WHERE search_vector @@
-                        websearch_to_tsquery('english', :query)
+                        to_tsquery(
+                            'english',
+                            replace(
+                                plainto_tsquery('english', :query)::text,
+                                ' & ',
+                                ' | '
+                            )
+                        )
                     ORDER BY score DESC, card_id
                     LIMIT :limit
                     """

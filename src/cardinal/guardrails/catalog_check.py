@@ -174,6 +174,22 @@ def _resolve_column_scope(
     )
 
 
+def _select_output_aliases(select: exp.Select) -> set[str]:
+    """Return output aliases defined in this SELECT's own expression list.
+
+    Postgres allows ORDER BY and GROUP BY to reference an output alias
+    rather than a physical column, so these names must not be treated
+    as unresolved catalog columns.
+    """
+    aliases: set[str] = set()
+
+    for expression in select.expressions:
+        if isinstance(expression, exp.Alias):
+            aliases.add(expression.alias.lower())
+
+    return aliases
+
+
 def _check_select(
     select: exp.Select,
     catalog: Catalog,
@@ -187,6 +203,7 @@ def _check_select(
         cte_columns,
         reasons,
     )
+    output_aliases = _select_output_aliases(select)
 
     for column in select.find_all(exp.Column):
         if not _column_belongs_to_select(column, select):
@@ -217,8 +234,10 @@ def _check_select(
             continue
 
         # Unqualified column.
-        matches: list[object] = []
+        if column_name in output_aliases:
+            continue
 
+        matches: list[object] = []
         for relation in relations.values():
             if column_name in _relation_columns(relation):
                 matches.append(relation)

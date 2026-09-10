@@ -43,6 +43,9 @@ def _system() -> RetrievalGuardedRepairedSystem:
     system.max_output_tokens = 100
     system.prompt_hash = "test-prompt-hash"
     system._last_context = None
+    system._last_metrics_context = None
+    system._last_glossary_context = None
+    system._last_table_notes_context = None
 
     return system
 
@@ -99,7 +102,9 @@ def test_generate_sql_uses_retrieved_context() -> None:
 
     system.prompt_template.render.assert_called_once_with(
         schema_context="TABLE: marts.fct_orders",
-        metrics_context="Metric: revenue",
+        metrics_context=system.context_assembler._format_metrics.return_value,
+        glossary_context=system.context_assembler._format_glossary.return_value,
+        table_notes_context=system.context_assembler._format_table_notes.return_value,
         question="total revenue",
         sql_dialect="PostgreSQL",
     )
@@ -150,7 +155,9 @@ def test_generate_sql_uses_sqlite_dialect() -> None:
 
     system.prompt_template.render.assert_called_once_with(
         schema_context="",
-        metrics_context="",
+        metrics_context=system.context_assembler._format_metrics.return_value,
+        glossary_context=system.context_assembler._format_glossary.return_value,
+        table_notes_context=system.context_assembler._format_table_notes.return_value,
         question="orders",
         sql_dialect="SQLite",
     )
@@ -230,7 +237,9 @@ def test_repair_sql_uses_last_retrieved_context() -> None:
 
     system.repair_template.render.assert_called_once_with(
         schema_dump="TABLE: marts.fct_orders",
-        metrics_context="Metric: revenue",
+        metrics_context=None,
+        glossary_context=None,
+        table_notes_context=None,
         question="What is total revenue?",
         sql_dialect="PostgreSQL",
         failed_sql="SELECT SUM(revenue) FROM marts.fct_orders;",

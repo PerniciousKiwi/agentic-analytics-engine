@@ -1,6 +1,9 @@
 ﻿import json
+from pathlib import Path
+
 import sqlglot
 from sqlglot import exp
+
 
 def extract_required_tables(sql: str) -> list[str]:
     try:
@@ -22,7 +25,7 @@ def extract_required_tables(sql: str) -> list[str]:
     return sorted(tables)
 
 rows = []
-with open("eval/suites/olist_gold_150.jsonl", "r", encoding="utf-8") as f:
+with Path("eval/suites/olist_gold_150.jsonl").open(encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if not line:
@@ -35,7 +38,9 @@ for row in rows:
     else:
         row["required_tables"] = []
 
-with open("eval/suites/olist_gold_150_annotated_review.jsonl", "w", encoding="utf-8") as f:
+with Path(
+    "eval/suites/olist_gold_150_annotated_review.jsonl"
+).open("w", encoding="utf-8") as f:
     for row in rows:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 

@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     rerank_model_path: str
 
+    max_agent_steps: int = 6
+    agent_step_timeout_s: float = 30.0
     max_repair_attempts: int = 3
 
     @property

@@ -1,19 +1,22 @@
-﻿import json
+﻿# Load the fresh harness results to know which questions are actually wrong.
+import json
+from pathlib import Path
+
 from eval.systems.retrieval_guarded_repaired import RetrievalGuardedRepairedSystem
 
-# Load the fresh harness results to know which questions are actually wrong.
-import glob
-result_files = sorted(glob.glob("results/olist_gold_150_retrieval_guarded_repaired_*.json"))
+result_files = sorted(
+    Path("results").glob("olist_gold_150_retrieval_guarded_repaired_*.json")
+)
 latest_result_file = result_files[-1]
 print(f"Using results file: {latest_result_file}")
 
-with open(latest_result_file, encoding="utf-8") as f:
+with latest_result_file.open(encoding="utf-8") as f:
     harness_data = json.load(f)
 harness_results = {r["question"]: r for r in harness_data["results"]}
 
 # Load the suite with required_tables annotations.
 rows = []
-with open("eval/suites/olist_gold_150.jsonl", encoding="utf-8") as f:
+with Path("eval/suites/olist_gold_150.jsonl").open(encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if line:
@@ -42,11 +45,15 @@ for i, row in enumerate(wrong_answerable):
     try:
         system._generate_sql(question, {"source": "postgres"})
         context = system._last_context
-        retrieved = system.context_assembler.tables_from_card_ids(context.card_ids) if context else set()
+        retrieved = (
+            system.context_assembler.tables_from_card_ids(context.card_ids)
+            if context
+            else set()
+        )
         retrieval_complete = required.issubset(retrieved)
         classification = "generation_error" if retrieval_complete else "retrieval_miss"
         missing = sorted(required - retrieved)
-    except Exception as e:
+    except Exception:
         retrieved = set()
         retrieval_complete = False
         classification = "exception_during_retrieval"
@@ -64,7 +71,10 @@ for i, row in enumerate(wrong_answerable):
     if (i + 1) % 10 == 0:
         print(f"...{i+1}/{len(wrong_answerable)}")
 
-with open("retrieval_decomposition_raw.json", "w", encoding="utf-8") as f:
+with Path("retrieval_decomposition_raw.json").open(
+    "w",
+    encoding="utf-8",
+) as f:
     json.dump(decomposition, f, ensure_ascii=False, indent=2)
 
 retrieval_misses = sum(1 for d in decomposition if d["classification"] == "retrieval_miss")

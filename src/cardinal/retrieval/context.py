@@ -590,7 +590,7 @@ class SchemaContextAssembler:
             )
 
         return "\n\n".join(sections)
-    
+
     def tables_from_card_ids(self, card_ids: tuple[str, ...]) -> set[str]:
         """Return the physical table names represented in assembled card IDs."""
         tables: set[str] = set()
@@ -612,9 +612,7 @@ class SchemaContextAssembler:
         sections = []
 
         for term, entry in self.catalog.glossary.glossary.items():
-            entry_tables = {
-                column.rsplit(".", 1)[0] for column in entry.warehouse_columns
-            }
+            entry_tables = {column.rsplit(".", 1)[0] for column in entry.warehouse_columns}
 
             if not entry_tables & tables:
                 continue

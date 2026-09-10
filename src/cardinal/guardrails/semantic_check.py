@@ -82,14 +82,10 @@ def _has_group_by_count(expression: exp.Expression) -> bool:
 def _has_superlative_shape(expression: exp.Expression) -> bool:
     """Return whether SQL uses an explicit superlative shape."""
     has_order_limit = (
-        expression.args.get("limit") is not None
-        and expression.args.get("order") is not None
+        expression.args.get("limit") is not None and expression.args.get("order") is not None
     )
 
-    has_max_min = any(
-        isinstance(node, exp.Max | exp.Min)
-        for node in expression.walk()
-    )
+    has_max_min = any(isinstance(node, exp.Max | exp.Min) for node in expression.walk())
 
     return has_order_limit or has_max_min
 
@@ -220,9 +216,7 @@ def check_mode_question_shape(
             ],
         )
 
-    if is_ambiguous_mode and not (
-        has_group_by_count or _has_superlative_shape(expression)
-    ):
+    if is_ambiguous_mode and not (has_group_by_count or _has_superlative_shape(expression)):
         return GuardResult(
             allowed=False,
             reasons=[

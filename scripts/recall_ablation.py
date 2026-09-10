@@ -1,9 +1,12 @@
 ﻿import json
+from pathlib import Path
+
+from cardinal.retrieval.fusion import ReciprocalRankFusion
+from cardinal.retrieval.models import RetrievalResult
 from cardinal.retrieval.postgres import PostgresCardStore
 from cardinal.retrieval.qdrant import QdrantCardStore
-from cardinal.retrieval.fusion import ReciprocalRankFusion
 from cardinal.retrieval.rerank import SchemaCardReranker
-from cardinal.retrieval.models import RetrievalResult
+
 
 def tables_from_card_id(card_id: str) -> set[str]:
     if card_id.startswith("table:"):
@@ -32,7 +35,7 @@ MAX_K = 20
 CANDIDATE_LIMIT = max(MAX_K, reranker.input_top_k)
 
 rows = []
-with open("eval/suites/olist_gold_150.jsonl", encoding="utf-8") as f:
+with Path("eval/suites/olist_gold_150.jsonl").open(encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if line:
@@ -43,7 +46,7 @@ print(f"Evaluating {len(answerable)} answerable questions with required_tables")
 
 configs = ["bm25", "dense", "rrf", "rrf_rerank"]
 ks = [5, 10, 20]
-totals = {cfg: {k: 0.0 for k in ks} for cfg in configs}
+totals = {cfg: dict.fromkeys(ks, 0.0) for cfg in configs}
 
 for i, row in enumerate(answerable):
     question = row["question"]

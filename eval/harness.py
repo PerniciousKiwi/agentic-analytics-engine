@@ -13,6 +13,7 @@ import psycopg
 from dotenv import load_dotenv
 
 from cardinal.agent.repair import classify_failure
+from eval.systems.ambiguity_aware import AmbiguityAwareSystem
 from eval.execution_accuracy import rows_equal
 from eval.systems.baseline import BaselineSystem
 from eval.systems.baseline_guarded import BaselineGuardedSystem
@@ -42,12 +43,17 @@ RESULT_FIELDS = (
     "prompt_hash",
     "confidence",
     "abstained",
+    "abstain_reason",
+    "ambiguity_type",
+    "clarifying_question",
+    "generation_skipped",
     "failure_class",
     "repair_attempts",
     "degraded",
 )
 
 SYSTEMS: dict[str, type[EvaluationSystem]] = {
+    "ambiguity_aware": AmbiguityAwareSystem,
     "baseline": BaselineSystem,
     "baseline_guarded": BaselineGuardedSystem,
     "baseline_repaired": BaselineRepairedSystem,
@@ -212,6 +218,11 @@ def build_result_record(
         "degraded": metadata.get("degraded", False),
         "error": metadata.get("error"),
         "sqlstate": metadata.get("sqlstate"),
+        "abstain_reason": metadata.get("abstain_reason"),
+        "ambiguity_type": metadata.get("ambiguity_type"),
+        "clarifying_question": metadata.get("clarifying_question"),
+        "generation_skipped": metadata.get("generation_skipped",False,
+        ),
     }
 
 

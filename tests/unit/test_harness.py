@@ -7,7 +7,7 @@ import pytest
 from eval.harness import RESULT_FIELDS, load_suite
 
 
-def test_result_fields_match_phase_2_contract() -> None:
+def test_result_fields_match_phase_9_contract() -> None:
     assert RESULT_FIELDS == (
         "question",
         "gold_sql",
@@ -20,11 +20,14 @@ def test_result_fields_match_phase_2_contract() -> None:
         "prompt_hash",
         "confidence",
         "abstained",
+        "abstain_reason",
+        "ambiguity_type",
+        "clarifying_question",
+        "generation_skipped",
         "failure_class",
         "repair_attempts",
         "degraded",
     )
-
 
 def test_load_suite_returns_jsonl_records(tmp_path: Path) -> None:
     suite_path = tmp_path / "suite.jsonl"

@@ -17,6 +17,9 @@ from eval.execution_accuracy import rows_equal
 from eval.systems.baseline import BaselineSystem
 from eval.systems.baseline_guarded import BaselineGuardedSystem
 from eval.systems.baseline_repaired import BaselineRepairedSystem
+from eval.systems.full_pipeline_selective import (
+    FullPipelineSelectiveSystem,
+)
 from eval.systems.oracle import OracleSystem
 from eval.systems.protocol import EvaluationSystem
 from eval.systems.retrieval_guarded_repaired import RetrievalGuardedRepairedSystem
@@ -48,6 +51,7 @@ SYSTEMS: dict[str, type[EvaluationSystem]] = {
     "baseline": BaselineSystem,
     "baseline_guarded": BaselineGuardedSystem,
     "baseline_repaired": BaselineRepairedSystem,
+    "full_pipeline_selective": FullPipelineSelectiveSystem,
     "oracle": OracleSystem,
     "retrieval_guarded_repaired": RetrievalGuardedRepairedSystem,
 }
@@ -259,6 +263,7 @@ def run_suite(
                         "db_id": record.get("db_id"),
                         "database_path": database_path,
                         "gold_sql": gold_sql,
+                        "category": record.get("category"),
                     }
 
                     predicted_sql, metadata = system.answer(
@@ -266,18 +271,34 @@ def run_suite(
                         db_context,
                     )
 
-                    if not predicted_sql:
-                        raise ValueError("Evaluation system returned no predicted SQL.")
+                    if metadata.get("abstained", False):
+                        executed_ok = False
+                        correct = False
 
-                    predicted_rows = execute_sql(
-                        predicted_sql,
-                        database_path,
-                    )
+                    else:
+                        if not predicted_sql:
+                            raise ValueError(
+                                "Evaluation system returned no predicted SQL."
+                            )
 
-                    gold_rows = execute_sql(
-                        gold_sql,
-                        database_path,
-                    )
+                        predicted_rows = execute_sql(
+                            predicted_sql,
+                            database_path,
+                        )
+
+                        gold_rows = execute_sql(
+                            gold_sql,
+                            database_path,
+                        )
+
+                        executed_ok = True
+
+                        correct = rows_equal(
+                            gold_rows,
+                            predicted_rows,
+                            float_tol=float_tolerance,
+                        )
+
 
                 elif suite_name == "olist_gold_150":
                     db_context = {
@@ -285,6 +306,7 @@ def run_suite(
                         "db_id": None,
                         "database_path": None,
                         "gold_sql": gold_sql,
+                        "category": record.get("category"),
                     }
 
                     predicted_sql, metadata = system.answer(
@@ -292,24 +314,37 @@ def run_suite(
                         db_context,
                     )
 
-                    if not predicted_sql:
-                        raise ValueError("Evaluation system returned no predicted SQL.")
+                    if metadata.get("abstained", False):
+                        executed_ok = False
+                        correct = False
 
-                    predicted_rows = execute_postgres_sql(predicted_sql)
+                    else:
+                        if not predicted_sql:
+                            raise ValueError(
+                                "Evaluation system returned no predicted SQL."
+                            )
 
-                    gold_rows = execute_postgres_sql(gold_sql)
+                        predicted_rows = execute_postgres_sql(
+                            predicted_sql
+                        )
+
+                        gold_rows = execute_postgres_sql(
+                            gold_sql
+                        )
+
+                        executed_ok = True
+
+                        correct = rows_equal(
+                            gold_rows,
+                            predicted_rows,
+                            float_tol=float_tolerance,
+                        )
 
                 else:
                     raise NotImplementedError(
-                        f"Execution is not implemented for suite: {suite_name}"
+                        "Execution is not implemented for suite: "
+                        f"{suite_name}"
                     )
-
-                executed_ok = True
-                correct = rows_equal(
-                    gold_rows,
-                    predicted_rows,
-                    float_tol=float_tolerance,
-                )
 
         except psycopg.Error as exc:
             executed_ok = False

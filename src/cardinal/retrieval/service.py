@@ -93,12 +93,35 @@ class RetrievalService:
             limit=self.reranker.input_top_k,
         )
 
-        return self.reranker.rerank(
+        fused_with_rrf_metadata = [
+            result.model_copy(
+                update={
+                    "metadata": {
+                        **result.metadata,
+                        "rrf_score": result.score,
+                    }
+                }
+            )
+            for result in fused
+        ]
+
+        reranked = self.reranker.rerank(
             query,
-            fused,
+            fused_with_rrf_metadata,
             limit=limit,
         )
 
+        return [
+            result.model_copy(
+                update={
+                    "metadata": {
+                        **result.metadata,
+                        "reranker_score": result.score,
+                    }
+                }
+            )
+            for result in reranked
+        ]
     @staticmethod
     def _to_result(row: dict) -> RetrievalResult:
         return RetrievalResult(

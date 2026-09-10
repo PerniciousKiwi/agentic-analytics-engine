@@ -128,7 +128,83 @@ def test_search_schema_uses_existing_retrieval_pipeline(
 
     assembler.assemble.assert_called_once_with([result])
 
+def test_search_schema_surfaces_retrieval_scores(
+    monkeypatch,
+) -> None:
+    from unittest.mock import MagicMock
 
+    from cardinal.agent import tools as agent_tools
+    from cardinal.agent.schemas import SearchSchemaIn
+    from cardinal.retrieval.models import (
+        RetrievalResponse,
+        RetrievalResult,
+    )
+
+    retrieval = MagicMock()
+    assembler = MagicMock()
+
+    retrieval.retrieve.return_value = RetrievalResponse(
+        query="orders",
+        mode="hybrid",
+        results=[
+            RetrievalResult(
+                card_id="table:marts.fct_orders",
+                card_type="table",
+                domain="orders",
+                card_name="fct_orders",
+                card_text="TABLE: marts.fct_orders",
+                score=4.0,
+                metadata={
+                    "rrf_score": 0.032,
+                    "reranker_score": 4.0,
+                },
+            ),
+            RetrievalResult(
+                card_id="table:marts.fct_customers",
+                card_type="table",
+                domain="customers",
+                card_name="fct_customers",
+                card_text="TABLE: marts.fct_customers",
+                score=3.25,
+                metadata={
+                    "rrf_score": 0.031,
+                    "reranker_score": 3.25,
+                },
+            ),
+        ],
+    )
+
+    context = MagicMock()
+    context.card_ids = (
+        "table:marts.fct_orders",
+        "table:marts.fct_customers",
+    )
+
+    assembler.assemble.return_value = context
+
+    monkeypatch.setattr(
+        agent_tools,
+        "_get_retrieval_service",
+        lambda: retrieval,
+    )
+
+    monkeypatch.setattr(
+        agent_tools,
+        "_get_context_assembler",
+        lambda: assembler,
+    )
+
+    result = agent_tools.search_schema(
+        SearchSchemaIn(
+            query="orders",
+        )
+    )
+
+    assert result.top_rrf_score == 0.032
+    assert result.top_reranker_score == 4.0
+    assert result.reranker_margin == 0.75
+
+    
 def test_search_schema_applies_domain_filter(
     monkeypatch,
 ) -> None:

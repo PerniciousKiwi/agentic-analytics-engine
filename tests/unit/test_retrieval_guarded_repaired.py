@@ -33,6 +33,8 @@ def _system() -> RetrievalGuardedRepairedSystem:
     system.client = MagicMock()
     system.loop = MagicMock()
 
+    system.sqlite_catalog_cache = {}
+
     system.catalog = MagicMock()
     system.catalog.metrics = []
 
@@ -155,9 +157,9 @@ def test_generate_sql_uses_sqlite_dialect() -> None:
 
     system.prompt_template.render.assert_called_once_with(
         schema_context="",
-        metrics_context=system.context_assembler._format_metrics.return_value,
-        glossary_context=system.context_assembler._format_glossary.return_value,
-        table_notes_context=system.context_assembler._format_table_notes.return_value,
+        metrics_context="",
+        glossary_context="",
+        table_notes_context="",
         question="orders",
         sql_dialect="SQLite",
     )

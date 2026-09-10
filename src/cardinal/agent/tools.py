@@ -94,8 +94,30 @@ def search_schema(request: SearchSchemaIn) -> SearchSchemaOut:
             for result in selected_results
         ]
 
+        top_rrf_score = None
+        top_reranker_score = None
+        reranker_margin = None
+
+        if selected_results:
+            top_result = selected_results[0]
+
+            rrf_score = top_result.metadata.get("rrf_score")
+            if isinstance(rrf_score, (int, float)):
+                top_rrf_score = float(rrf_score)
+
+            top_reranker_score = float(top_result.score)
+
+            if len(selected_results) >= 2:
+                reranker_margin = float(
+                    selected_results[0].score
+                    - selected_results[1].score
+                )
+
         return SearchSchemaOut(
             cards=cards,
+            top_rrf_score=top_rrf_score,
+            top_reranker_score=top_reranker_score,
+            reranker_margin=reranker_margin,
         )
 
     except Exception as exc:

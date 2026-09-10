@@ -1,0 +1,9 @@
+basic_aggregation: 1.0
+metric_definition: 1.0
+multi_table_join: 27.0
+order_status: 1.0
+payments: 1.0
+products: 1.0
+reviews: 1.0
+time_analysis: 1.0
+window_time: 25.0

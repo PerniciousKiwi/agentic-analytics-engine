@@ -66,4 +66,9 @@ class SearchSchemaOut(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     cards: list[SchemaCardSummary] = Field(default_factory=list)
+
+    top_rrf_score: float | None = None
+    top_reranker_score: float | None = None
+    reranker_margin: float | None = None
+
     error: ToolError | None = None

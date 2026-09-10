@@ -219,6 +219,64 @@ def test_hybrid_mode_respects_limit() -> None:
 
     assert len(response.results) == 2
 
+def test_hybrid_preserves_rrf_and_reranker_scores() -> None:
+    lexical_store = Mock()
+    dense_store = Mock()
+    reranker = Mock()
+
+    lexical_store.search.return_value = [
+        {
+            "card_id": "table:marts.fct_orders",
+            "card_type": "table",
+            "domain": "orders",
+            "card_name": "fct_orders",
+            "card_text": "TABLE: marts.fct_orders",
+            "metadata": {},
+            "score": 0.8,
+        }
+    ]
+
+    dense_store.search.return_value = [
+        RetrievalResult(
+            card_id="table:marts.fct_orders",
+            card_type="table",
+            domain="orders",
+            card_name="fct_orders",
+            card_text="TABLE: marts.fct_orders",
+            score=0.9,
+        )
+    ]
+
+    reranker.input_top_k = 50
+
+    def fake_rerank(query, candidates, limit):
+        assert "rrf_score" in candidates[0].metadata
+
+        return [
+            candidates[0].model_copy(
+                update={"score": 4.25}
+            )
+        ]
+
+    reranker.rerank.side_effect = fake_rerank
+
+    service = RetrievalService(
+        lexical_store=lexical_store,
+        dense_store=dense_store,
+        reranker=reranker,
+    )
+
+    response = service.retrieve(
+        "orders",
+        mode="hybrid",
+        limit=10,
+    )
+
+    result = response.results[0]
+
+    assert result.metadata["rrf_score"] > 0
+    assert result.metadata["reranker_score"] == 4.25
+    assert result.score == 4.25
 
 def test_hybrid_mode_uses_reciprocal_rank_fusion() -> None:
     lexical_store = Mock()

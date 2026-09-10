@@ -12,6 +12,7 @@ metrics:
     caveats: "Excludes orders without order-item records because calculated_order_value is unavailable. This is not the same as recorded payment value."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
   - name: gmv
     label: GMV
@@ -23,6 +24,7 @@ metrics:
     caveats: "GMV excludes freight charges. Orders without order-item records are excluded."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
   - name: active_customer
     label: Active Customer
@@ -34,6 +36,7 @@ metrics:
     caveats: "Uses customer_unique_id rather than customer_id because one business customer can have multiple customer records."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
   - name: aov
     label: Average Order Value
@@ -45,6 +48,7 @@ metrics:
     caveats: "Excludes orders without order-item records."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
   - name: order_count
     label: Order Count
@@ -55,6 +59,7 @@ metrics:
     caveats: "Counts orders regardless of payment or order-item availability."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
   - name: delivered_order_rate
     label: Delivered Order Rate
@@ -65,6 +70,7 @@ metrics:
     caveats: "An order is considered delivered only when order_delivered_customer_date is populated."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: avg_review_score
@@ -77,6 +83,7 @@ metrics:
     caveats: "Review-level metric. An order can have multiple reviews, so it should not be interpreted as a unique-order average without explicit aggregation."
     tables:
           - "marts.fct_reviews"
+    non_negative: true
 
 
   - name: late_delivery_rate
@@ -89,6 +96,7 @@ metrics:
     caveats: "Late means delivery_delay_days > 0. Orders without both delivered and estimated delivery timestamps are excluded."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: freight_ratio
@@ -101,6 +109,7 @@ metrics:
     caveats: "Calculated using item value plus freight value as the denominator."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: repeat_customer_rate
@@ -112,6 +121,7 @@ metrics:
     caveats: "Uses customer_unique_id and requires customer-level aggregation. Multiple customer_id records for one business customer are treated as one customer."
     tables:
           - "marts.agg_customer_lifetime"
+    non_negative: true
 
   - name: customer_lifetime_value
     label: Customer Lifetime Value
@@ -123,6 +133,7 @@ metrics:
     caveats: "Observed historical value, not a forward-looking customer lifetime prediction."
     tables:
           - "marts.agg_customer_lifetime"
+    non_negative: true
 
 
   - name: new_customers
@@ -134,6 +145,7 @@ metrics:
     caveats: "Based on the earliest order observed in the available dataset, not necessarily the customer's true first-ever purchase."
     tables:
           - "marts.agg_customer_lifetime"
+    non_negative: true
 
 
   - name: cancelled_order_rate
@@ -145,6 +157,7 @@ metrics:
     caveats: "Uses the source order_status value and treats 'canceled' as the cancellation status."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: avg_delivery_days
@@ -157,6 +170,7 @@ metrics:
     caveats: "Only orders with both purchase and delivered-customer timestamps are included."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: on_time_delivery_rate
@@ -169,6 +183,7 @@ metrics:
     caveats: "Only orders with delivery and estimated delivery dates are included."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: revenue_per_seller
@@ -180,6 +195,7 @@ metrics:
     caveats: "Seller sales include item price plus freight value."
     tables:
           - "marts.agg_seller_performance"
+    non_negative: true
 
 
   - name: revenue_per_state
@@ -193,6 +209,7 @@ metrics:
     caveats: "Revenue is attributed to the customer's state, not the seller's state."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: category_revenue_share
@@ -205,6 +222,7 @@ metrics:
     caveats: "Uses item price rather than freight-inclusive calculated order value."
     tables:
           - "marts.fct_order_items"
+    non_negative: true
 
 
   - name: payment_reconciliation_rate
@@ -216,6 +234,7 @@ metrics:
     caveats: "Matching uses a tolerance of 0.01 and is based on calculated order value versus recorded payment value."
     tables:
           - "marts.fct_orders"
+    non_negative: true
 
 
   - name: orders_with_reviews_rate
@@ -227,3 +246,4 @@ metrics:
     caveats: "An order may have multiple review records; the metric measures whether at least one review exists."
     tables:
           - "marts.fct_orders"
+    non_negative: true

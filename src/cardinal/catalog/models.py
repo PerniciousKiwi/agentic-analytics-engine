@@ -10,6 +10,7 @@ class Metric(BaseModel):
     grain: str
     caveats: str
     tables: list[str]
+    non_negative: bool = False
 
 
 class GlossaryEntry(BaseModel):
